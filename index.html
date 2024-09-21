@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра "Предатель"</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #74ebd5, #acb6e5);
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #74ebd5;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+            width: 200px;
+        }
+
+        input:focus {
+            border-color: #acb6e5;
+            outline: none;
+        }
+
+        select,
+        button {
+            padding: 10px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        select {
+            background-color: #ffffff;
+            border: 2px solid #74ebd5;
+        }
+
+        button {
+            background-color: #74ebd5;
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #acb6e5;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(172, 182, 229, 0.7);
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-status {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #333;
+            animation: slideIn 1s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #generatedCode {
+            margin: 20px 0;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffffff;
+            animation: glow 1.2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            }
+
+            100% {
+                text-shadow: 0 0 20px rgba(172, 182, 229, 1);
+            }
+        }
+
+        #assignedWords {
+            margin: 20px 0;
+            font-size: 1.8em;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Добро пожаловать в игру "Предатель"</h1>
+
+    <div id="initialMenu">
+        <button id="createGameBtn">Создать игру</button>
+        <button id="joinGameBtn">Присоединиться</button>
+    </div>
+    <div id="joinGameMenu" class="hidden">
+        <input type="text" id="gameCodeInput" placeholder="Введите 3 символа">
+        <button id="submitGameCode">Присоединиться</button>
+    </div>
+
+    <div id="createGameMenu" class="hidden">
+        <label for="playersCount">Количество игроков:</label>
+        <select id="playersCount">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <button id="createRoomBtn">Создать комнату</button>
+    </div>
+    <div id="gameRoom" class="hidden">
+        <p id="generatedCode"></p>
+        <button id="startGameMenu">Играть</button>
+        <p id="assignedWords"></p>
+    </div>
+    <div id="gameMenu" class="hidden">
+        <h2>Номер игрока</h2>
+        <input type="number" id="playerNumber" placeholder="Введите номер игрока">
+        <button id="startGameBtn">Играть</button>
+    </div>
+    <div>
+        <h2 id="yourRoleIs"></h2>
+    </div>
+    <script>
+        const createGameBtn = document.getElementById('createGameBtn');
+        const joinGameBtn = document.getElementById('joinGameBtn');
+        const createGameMenu = document.getElementById('createGameMenu');
+        const joinGameMenu = document.getElementById('joinGameMenu');
+        const initialMenu = document.getElementById('initialMenu');
+        const gameMenu = document.getElementById('gameMenu');
+        const gameRoom = document.getElementById('gameRoom');
+        const generatedCode = document.getElementById('generatedCode');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const playersCount = document.getElementById('playersCount');
+        const playerNumber = document.getElementById('playerNumber');
+        const gameCodeInput = document.getElementById('gameCodeInput');
+        const assignedWords = document.getElementById('assignedWords');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const submitGameCode = document.getElementById('submitGameCode');
+        const startGameMenu = document.getElementById('startGameMenu');
+        const yourRoleIs = document.getElementById('yourRoleIs');
+        const goBackBtn = document.createElement('button');
+
+        const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        const wordPairs = [
+            ['Комар', 'Вампир'],
+            ['Автобус', 'Троллейбус'],
+            ['Лев', 'Тигр'],
+            ['Огонь', 'Пламя'],
+            ['Кофе', 'Чай'],
+            ['Карандаш', 'Ручка'],
+            ['Луна', 'Солнце'],
+            ['Вода', 'Лёд'],
+            ['Кошка', 'Тигр'],
+            ['Дом', 'Квартира'],
+            ['Книга', 'Тетрадь'],
+            ['Зима', 'Лето'],
+            ['Океан', 'Море'],
+            ['Лес', 'Парк'],
+            ['Снег', 'Лёд'],
+            ['Рыба', 'Акула'],
+            ['Яблоко', 'Апельсин'],
+            ['Гитара', 'Барабан'],
+            ['Молоко', 'Сливки'],
+            ['Велосипед', 'Мотоцикл'],
+            ['Пальто', 'Куртка'],
+            ['Носки', 'Перчатки'],
+            ['Часы', 'Будильник'],
+            ['Кошелёк', 'Сумка'],
+            ['Собака', 'Волк'],
+            ['Кровать', 'Диван'],
+            ['Самолёт', 'Вертолёт'],
+            ['Река', 'Озеро'],
+            ['Чашка', 'Стакан'],
+            ['Гора', 'Холм'],
+            ['Ручка', 'Маркер'],
+            ['Молния', 'Гроза'],
+            ['Торт', 'Пирог'],
+            ['Зубная щётка', 'Гребень'],
+            ['Зеркало', 'Стекло'],
+            ['Клавиатура', 'Мышь'],
+            ['Машина', 'Автобус'],
+            ['Банан', 'Киви'],
+            ['Телефон', 'Планшет'],
+            ['Трава', 'Цветы'],
+            ['Стол', 'Стул'],
+            ['Окно', 'Дверь'],
+            ['Карта', 'Глобус'],
+            ['Очки', 'Линзы'],
+            ['Компьютер', 'Ноутбук'],
+            ['Бутылка', 'Банка'],
+            ['Медведь', 'Панда'],
+            ['Орел', 'Ястреб'],
+            ['Ручей', 'Водопад'],
+            ['Библиотека', 'Книжный магазин'],
+            ['Груша', 'Яблоко'],
+            ['Письмо', 'Электронная почта'],
+            ['Телевизор', 'Монитор'],
+            ['Салат', 'Суп'],
+            ['Мотоцикл', 'Скутер'],
+            ['Вино', 'Пиво'],
+            ['Роза', 'Тюльпан'],
+            ['Сигнализация', 'Замок'],
+            ['Музыка', 'Шум'],
+            ['Лес', 'Джунгли'],
+            ['Кровать', 'Матрас'],
+            ['Ракета', 'Спутник'],
+            ['Ветер', 'Буря'],
+            ['Камень', 'Песок'],
+            ['Школа', 'Университет'],
+            ['Лодка', 'Яхта'],
+            ['Дождь', 'Снег'],
+            ['Мороженое', 'Торт'],
+            ['Футбол', 'Баскетбол'],
+            ['Медсестра', 'Доктор'],
+            ['Кинотеатр', 'Театр'],
+            ['Шоколад', 'Конфета'],
+            ['Хлеб', 'Булочка'],
+            ['Лестница', 'Эскалатор'],
+            ['Кастрюля', 'Сковорода'],
+            ['Фонарь', 'Лампа'],
+            ['Трамвай', 'Поезд'],
+            ['Сковорода', 'Котелок'],
+            ['Дракон', 'Грифон'],
+            ['Клавиша', 'Педаль'],
+            ['Волна', 'Прилив'],
+            ['Солнцезащитные очки', 'Шляпа'],
+            ['Зебра', 'Лошадь'],
+            ['Костюм', 'Фрак'],
+            ['Суп', 'Борщ'],
+            ['Зуб', 'Коренной зуб'],
+            ['Песок', 'Гравий'],
+            ['Трость', 'Костыль'],
+            ['Кольцо', 'Браслет'],
+            ['Парк', 'Сад'],
+            ['Лист', 'Цветок'],
+            ['Перо', 'Кисть'],
+            ['Яхта', 'Катер'],
+            ['Самокат', 'Ролики'],
+            ['Гардероб', 'Шкаф'],
+            ['Бассейн', 'Озеро'],
+            ['Флаг', 'Знамя'],
+            ['Ракушка', 'Коралл'],
+            ['Облако', 'Туман'],
+            ['Танец', 'Балет'],
+            ['Пчела', 'Оса'],
+            ['Корова', 'Бык'],
+            ['Мост', 'Плот'],
+            ['Цепь', 'Замок'],
+            ['Планета', 'Звезда'],
+            ['Пианино', 'Гитара'],
+            ['Календарь', 'Часы'],
+            ['Шарф', 'Шапка'],
+            ['Тарелка', 'Миска'],
+            ['Фотоаппарат', 'Видеокамера'],
+            ['Тетрадь', 'Блокнот'],
+            ['Пакет', 'Сумка'],
+            ['Скелет', 'Череп'],
+            ['Стекло', 'Хрусталь'],
+            ['Лук', 'Арбалет'],
+            ['Сапоги', 'Ботинки'],
+            ['Ковер', 'Плед'],
+            ['Железо', 'Сталь'],
+            ['Скрепка', 'Зажим'],
+            ['Колесо', 'Шина'],
+            ['Чемодан', 'Рюкзак'],
+            ['Дорога', 'Шоссе'],
+            ['Птица', 'Бабочка'],
+            ['Вилка', 'Ложка'],
+            ['Семья', 'Родители'],
+            ['Ухо', 'Глаз'],
+            ['Полка', 'Шкаф'],
+            ['Штаны', 'Шорты']
+        ];
+
+
+        function creategoBackBtn() {
+            goBackBtn.id = 'goBackBtn';
+            goBackBtn.textContent = 'Назад';
+            document.body.appendChild(goBackBtn);
+        }
+
+        createGameBtn.addEventListener('click', function () {
+            initialMenu.classList.add('hidden');
+            createGameMenu.classList.remove('hidden');
+            creategoBackBtn();
+        });
+
+        joinGameBtn.addEventListener('click', function () {
+            initialMenu.classList.add('hidden');
+            joinGameMenu.classList.remove('hidden');
+            creategoBackBtn();
+        });
+
+        goBackBtn.addEventListener('click', function () {
+            initialMenu.classList.remove('hidden');
+            joinGameMenu.classList.add('hidden');
+            createGameMenu.classList.add('hidden');
+            gameRoom.classList.add('hidden');
+            goBackBtn.remove();
+        });
+
+        function generateCode(players) {
+            let code = '';
+            let sum = 0;
+            while (sum !== players) {
+                code = '';
+                sum = 0;
+                for (let i = 0; i < 3; i++) {
+                    let char = chars[Math.floor(Math.random() * chars.length)];
+                    code += char;
+                    if (!isNaN(parseInt(char))) {
+                        sum += parseInt(char);
+                    }
+                }
+            }
+            return code;
+        }
+
+        // Нажатие на "Создать комнату"
+        createRoomBtn.addEventListener('click', function () {
+            let players = parseInt(playersCount.value);
+            let newcode = generateCode(players);
+            generatedCode.textContent = `Код игры: ${newcode}`;
+            createGameMenu.classList.add('hidden');
+            // const playerWords = assignWordsToPlayers(players);
+            // assignedWords.textContent = `Слова, выданные игрокам: ${playerWords.join(', ')}`;
+            gameRoom.classList.remove('hidden');
+            startGameMenu.addEventListener('click', function () {
+                mainGame(newcode);
+            });
+        });
+        submitGameCode.addEventListener('click', function () {
+            let oldcode = gameCodeInput.value;
+            mainGame(oldcode);
+        });
+
+        function convertStringToNumber(str) {
+            let total = 0;
+
+            for (let i = 0; i < str.length; i++) {
+                let char = str[i];
+                let index = chars.indexOf(char);
+                total += index;
+            }
+
+            return total;
+        }
+
+        function mainGame(code) {
+            initialMenu.classList.add('hidden');
+            joinGameMenu.classList.add('hidden');
+            createGameMenu.classList.add('hidden');
+            gameRoom.classList.add('hidden');
+            goBackBtn.classList.add('hidden');
+            let wordid = convertStringToNumber(code);
+            let maxpl = 0;
+            for (let i = 0; i < 2; i++) {
+                if (!isNaN(code[i])) { maxpl += parseInt(code[i]); }
+            }
+            gameMenu.classList.remove('hidden');
+            startGameBtn.addEventListener('click', function () {
+                let curentPlayerNumber = playerNumber.value;
+                if (curentPlayerNumber <= maxpl && curentPlayerNumber > 0) {
+                    let curentMathia = convertStringToNumber(code) % maxpl + 1;
+                    if (curentMathia == curentPlayerNumber) {
+                        yourRoleIs.textContent = `Твоё слово: ${wordPairs[wordid - 4][1]}`;
+                    } else {
+                        yourRoleIs.textContent = `Твоё слово: ${wordPairs[wordid - 4][0]}`;
+                    }
+                }
+            })
+        }
+
+    </script>
+</body>
+
+</html>
