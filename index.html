@@ -330,6 +330,7 @@
             goBackBtn.id = 'goBackBtn';
             goBackBtn.textContent = 'Назад';
             document.body.appendChild(goBackBtn);
+            goBackBtn.classList.remove('hidden');
         }
 
         createGameBtn.addEventListener('click', function () {
@@ -349,6 +350,8 @@
             joinGameMenu.classList.add('hidden');
             createGameMenu.classList.add('hidden');
             gameRoom.classList.add('hidden');
+            gameMenu.classList.add('hidden');
+            yourRoleIs.classList.add('hidden');
             goBackBtn.remove();
         });
 
@@ -405,22 +408,24 @@
             createGameMenu.classList.add('hidden');
             gameRoom.classList.add('hidden');
             goBackBtn.classList.add('hidden');
+            creategoBackBtn();
             let wordid = convertStringToNumber(code);
             let maxpl = 0;
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < code.length; i++) {
                 if (!isNaN(code[i])) { maxpl += parseInt(code[i]); }
             }
             gameMenu.classList.remove('hidden');
+            let curentMathia = convertStringToNumber(code) % maxpl;
             startGameBtn.addEventListener('click', function () {
                 let curentPlayerNumber = playerNumber.value;
                 if (curentPlayerNumber <= maxpl && curentPlayerNumber > 0) {
-                    let curentMathia = convertStringToNumber(code) % maxpl + 1;
                     if (curentMathia == curentPlayerNumber) {
                         yourRoleIs.textContent = `Твоё слово: ${wordPairs[wordid - 4][1]}`;
                     } else {
                         yourRoleIs.textContent = `Твоё слово: ${wordPairs[wordid - 4][0]}`;
                     }
                 }
+                yourRoleIs.classList.remove('hidden');
             })
         }
 
