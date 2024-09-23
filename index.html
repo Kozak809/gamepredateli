@@ -415,7 +415,7 @@
                 if (!isNaN(code[i])) { maxpl += parseInt(code[i]); }
             }
             gameMenu.classList.remove('hidden');
-            let curentMathia = convertStringToNumber(code) % maxpl;
+            let curentMathia = convertStringToNumber(code) % maxpl+1;
             startGameBtn.addEventListener('click', function () {
                 let curentPlayerNumber = playerNumber.value;
                 if (curentPlayerNumber <= maxpl && curentPlayerNumber > 0) {
